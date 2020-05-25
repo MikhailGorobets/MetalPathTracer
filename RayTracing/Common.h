@@ -54,7 +54,6 @@ struct ApplicationData {
     float4x4 viewProjectMatrix;
     float4x4 invViewProjectMatrix;
     uint32_t frameIndex;
-    uint32_t emitterTriaglesCount;
     float2   frameOffset;
 };
 

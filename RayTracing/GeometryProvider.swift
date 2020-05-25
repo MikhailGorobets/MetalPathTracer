@@ -99,39 +99,6 @@ struct Triangle {
     let indexMaterial: uint32
 }
 
-struct EmitterTriangle {
-    let area: Float
-    var cdf: Float
-    var pdf: Float
-    let globalIndex: UInt32
-    
-    let v0: Vertex
-    let v1: Vertex
-    let v2: Vertex
-    
-    
-    let emissiveX: Float
-    let emissiveY: Float
-    let emissiveZ: Float
- 
-    
-    init(area: Float, cdf: Float, pdf: Float, globalIndex: UInt32, v0: Vertex, v1: Vertex, v2: Vertex, emission: simd_float3) {
-        self.area = area
-        self.cdf = cdf
-        self.pdf = pdf
-        self.globalIndex = globalIndex
-        self.v0 = v0
-        self.v1 = v1
-        self.v2 = v2
-        self.emissiveX = emission.x
-        self.emissiveY = emission.y
-        self.emissiveZ = emission.z
-    }
-    
-};
-
-
-
 extension MTLIndexType {
     func convertToMSPDataType() -> MPSDataType {
         switch self {
@@ -149,7 +116,6 @@ class GeometryProvider {
     let accelerationStruct: MPSTriangleAccelerationStructure
     let materialBuffer: MTLBuffer
     let triangleBuffer: MTLBuffer
-    let emitterTriangleBuffer: MTLBuffer
     let vertexBuffer: MTLBuffer
     let indexBuffer: MTLBuffer
     
@@ -180,7 +146,6 @@ class GeometryProvider {
         
         var materials: [Material] = []
         var triangles: [Triangle] = []
-        var emitterTriangles: [EmitterTriangle] = []
         
         var totalLightArea: Float = 0.0
         
@@ -217,7 +182,6 @@ class GeometryProvider {
            
                     if simd_length(material.emissive) > 0.0 {
                         let area = 0.5 * simd_length(simd_cross(v2.position - v0.position, v1.position - v0.position))
-                        emitterTriangles.append(EmitterTriangle(area: area, cdf: 0, pdf: 0, globalIndex: globalIndex, v0: v0, v1: v1, v2: v2, emission: material.emissive ))
                         totalLightArea += area
                     }
                     globalIndex += 1
@@ -227,21 +191,11 @@ class GeometryProvider {
             }
         }
         
-        emitterTriangles.sort(by: { x, y in x.area < y.area})
-        
-        var cdf: Float = 0.0
-        for index in 0 ..< emitterTriangles.count {
-            emitterTriangles[index].cdf = cdf
-            emitterTriangles[index].pdf = emitterTriangles[index].area / totalLightArea
-            cdf += emitterTriangles[index].pdf
-        }
-        emitterTriangles.append(EmitterTriangle(area: 0, cdf: 1.0, pdf: 0, globalIndex: 0, v0: Vertex(), v1: Vertex(), v2: Vertex(), emission: .zero))
+     
         
         self.materialBuffer = device.makeBuffer(bytes: materials, length: MemoryLayout<Material>.size * materials.count)!
         self.triangleBuffer = device.makeBuffer(bytes: triangles, length: MemoryLayout<Triangle>.size * triangles.count)!
-        self.emitterTriangleBuffer = device.makeBuffer(bytes: emitterTriangles, length: MemoryLayout<EmitterTriangle>.size * triangles.count)!
-        
-        
+
         self.vertexBuffer = meshes.first!.vertexBuffers.first!.buffer
         self.indexBuffer = meshes.first!.submeshes.first!.indexBuffer.buffer
         

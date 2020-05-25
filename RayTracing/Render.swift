@@ -16,7 +16,6 @@ struct ApplicationData {
     var viewProjectMatrix: float4x4
     var invViewProjectMatrix: float4x4
     var frameIndex: uint32
-    var emitterTriagnlesCount: uint32
     var frameOffset: packed_float2
 }
 
@@ -120,7 +119,6 @@ class Render: NSObject, MTKViewDelegate {
         ptr.pointee.viewProjectMatrix = projection * view
         ptr.pointee.invViewProjectMatrix = simd_inverse(projection * view)
         ptr.pointee.frameIndex = self.frameIndex
-        ptr.pointee.emitterTriagnlesCount = 0
         ptr.pointee.frameOffset = packed_float2(repeating: 0)
         
         self.frameIndex += 1

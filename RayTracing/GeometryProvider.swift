@@ -134,57 +134,28 @@ class GeometryProvider {
         
         
         let (sourceMeshes, meshes) = try! MTKMesh.newMeshes(asset: asset, device: device)
-        
-        let extractVertex: (UnsafeMutableRawPointer, Int) -> Vertex = { pointer, index in
-            pointer.load(fromByteOffset: MemoryLayout<Vertex>.size * index, as: Vertex.self)
-        }
-        
-        let extractIndex: (UnsafeMutableRawPointer, Int) -> Int = { pointer, index in
-            Int(pointer.load(fromByteOffset: MemoryLayout<UInt32>.size * index, as: UInt32.self))
-        }
-
+    
         
         var materials: [Material] = []
         var triangles: [Triangle] = []
         
-        var totalLightArea: Float = 0.0
         
         for mesh in sourceMeshes {
-            
-            let ptrVertexBuffer = mesh.vertexBuffers.first!.map().bytes
-            let vertices = (0..<mesh.vertexCount).map { extractVertex(ptrVertexBuffer, $0) }
-            
-            var globalIndex: uint32 = 0
-           
-            
             for submesh in mesh.submeshes as! [MDLSubmesh] {
-                let ptrIndexBuffer = submesh.indexBuffer.map().bytes
-                let indices  = (0..<submesh.indexCount).map { extractIndex(ptrIndexBuffer, $0) }
+ 
                 
                 let diffuse  = (submesh.material?.properties(with: .baseColor).first?.float3Value)!
                 var emissive = (submesh.material?.properties(with: .emission).first?.float3Value)!
                 
+                //Don't work emissive loading
                 if submesh.material?.name == "light" {
                     emissive = simd_float3(5, 4, 3)
                 }
-                
-                
+
                 let material = Material(diffuse: diffuse, type: 0, emissive: emissive)
 
-                
-                for id in 0 ..< submesh.indexCount / 3 {
-           
-                    let v0 = vertices[indices[3 * id + 0]]
-                    let v1 = vertices[indices[3 * id + 1]]
-                    let v2 = vertices[indices[3 * id + 2]]
-                    
+                for _ in 0 ..< submesh.indexCount / 3 {
                     triangles.append(Triangle(indexMaterial: uint32(materials.count)))
-           
-                    if simd_length(material.emissive) > 0.0 {
-                        let area = 0.5 * simd_length(simd_cross(v2.position - v0.position, v1.position - v0.position))
-                        totalLightArea += area
-                    }
-                    globalIndex += 1
                 }
             
                 materials.append(material)

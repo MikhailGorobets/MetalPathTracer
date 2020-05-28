@@ -96,10 +96,10 @@ kernel void HandleIntersections(device const Intersection* intersections [[buffe
         currentRay.radiance += material.emissive * currentRay.throughput;
     }
     
-
+    //pdf = cos(theta) / PI
     currentRay.base.origin = currentVertex.position + currentVertex.normal * DISTANCE_EPSILON;
     currentRay.base.direction = GGX_SampleHemisphere(currentVertex.normal, 1.0, rng);
-    currentRay.throughput *= 2.0 * material.diffuse * saturate(dot(currentRay.base.direction, currentVertex.normal));
+    currentRay.throughput *= material.diffuse;
     currentRay.bounces++;
 
 }

@@ -174,7 +174,7 @@ class Render: NSObject, MTKViewDelegate {
             }
             
             
-            for _ in 0 ..< 4 {
+            for _ in 0 ..< 7 {
                 
                 
                 
